@@ -1,3 +1,6 @@
 /target/
 test_snapshots/
 *.wasm
+.env
+.env.local
+.env.*.local

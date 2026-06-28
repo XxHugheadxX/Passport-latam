@@ -8,6 +8,7 @@ export function useWallet() {
   const [address, setAddress] = useState<string | null>(null)
   const [connected, setConnected] = useState(false)
   const [connecting, setConnecting] = useState(false)
+  const [certifying, setCertifying] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
 
@@ -35,6 +36,24 @@ export function useWallet() {
     } catch {}
   }
 
+  const certifyWallet = async (addr: string) => {
+    try {
+      setCertifying(true)
+      const { data: { session } } = await createClient().auth.getSession()
+      if (!session) return
+      await fetch('/api/certify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ wallet: addr }),
+      })
+    } catch {} finally {
+      setCertifying(false)
+    }
+  }
+
   const connect = useCallback(async () => {
     if (!freighter) {
       setError('Freighter no instalado. Descargalo en https://freighter.app')
@@ -51,6 +70,7 @@ export function useWallet() {
       const { address: addr } = await freighter.requestAccess()
       setAddress(addr)
       setConnected(true)
+      await certifyWallet(addr)
       return addr
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al conectar wallet')

@@ -105,6 +105,8 @@ export default function TransferPage() {
     </div>
   )
 
+  if (!wallet.ready) return <div className="flex-1 flex items-center justify-center"><span className="loading loading-spinner loading-lg" /></div>
+
   const isOwner = wallet.isConnected && wallet.address === passport?.owner_address
 
   return (

@@ -3,7 +3,9 @@
 import { useWallet } from '@/app/hooks/useWallet'
 
 export function WalletButton({ className = '' }: { className?: string }) {
-  const { address, isConnected, connect, disconnect, isConnecting } = useWallet()
+  const { address, isConnected, connect, disconnect, isConnecting, ready } = useWallet()
+
+  if (!ready) return <span className="loading loading-spinner loading-xs" />
 
   if (isConnected && address) {
     return (

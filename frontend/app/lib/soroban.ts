@@ -64,8 +64,17 @@ export async function verifyPassport(passportId: string) {
   const server = getServer()
   const contract = getContract()
   const sourceAccount = 'GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN'
-  const account = await server.getAccount(sourceAccount)
   const np = getConfig().networkPassphrase
+
+  let account
+  try {
+    account = await server.getAccount(sourceAccount)
+  } catch (e: any) {
+    if (e?.message?.includes('NOT_FOUND')) {
+      throw new Error('La red Stellar no reconoce la cuenta de verificación. Probá de nuevo más tarde.')
+    }
+    throw new Error('No se pudo conectar con la red Stellar. Verificá tu conexión.')
+  }
 
   const tx = new TransactionBuilder(account, {
     fee: BASE_FEE,
@@ -77,10 +86,41 @@ export async function verifyPassport(passportId: string) {
 
   const result = await server.simulateTransaction(tx)
 
-  if (rpc.Api.isSimulationSuccess(result)) {
-    return scValToNative(result.result!.retval)
+  if (rpc.Api.isSimulationError(result)) {
+    throw new Error('El contrato respondió con un error: ' + result.error)
   }
-  throw new Error('verify_passport failed: ' + JSON.stringify(result))
+
+  if (!rpc.Api.isSimulationSuccess(result) || !result.result?.retval) {
+    throw new Error('No se pudo obtener el resultado del contrato en Stellar.')
+  }
+
+  let native
+  try {
+    native = scValToNative(result.result.retval)
+  } catch {
+    throw new Error('Error al interpretar la respuesta del contrato. Posiblemente el pasaporte no existe on-chain.')
+  }
+
+  // Handle different return formats
+  if (typeof native === 'string') {
+    return { metadata_hash: native, owner: '', issuer: '' }
+  }
+  if (Array.isArray(native)) {
+    return {
+      metadata_hash: String(native[0] ?? ''),
+      owner: String(native[1] ?? ''),
+      issuer: String(native[2] ?? ''),
+    }
+  }
+  if (native && typeof native === 'object') {
+    const obj = native as Record<string, unknown>
+    return {
+      metadata_hash: String(obj.metadata_hash ?? obj[0] ?? ''),
+      owner: String(obj.owner ?? obj[1] ?? ''),
+      issuer: String(obj.issuer ?? obj[2] ?? ''),
+    }
+  }
+  return { metadata_hash: String(native), owner: '', issuer: '' }
 }
 
 export async function buildEmitPassportTx(

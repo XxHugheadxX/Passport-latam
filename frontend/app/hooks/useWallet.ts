@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import freighter from '@stellar/freighter-api'
+import { createClient } from '@/app/lib/supabase'
 
 export function useWallet() {
   const [address, setAddress] = useState<string | null>(null)
@@ -25,6 +26,22 @@ export function useWallet() {
     } catch {}
   }
 
+  // Best-effort: never throws, never blocks wallet connection
+  const certifyWallet = async (addr: string) => {
+    try {
+      const { data: { session } } = await createClient().auth.getSession()
+      if (!session) return
+      await fetch('/api/certify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ wallet: addr }),
+      })
+    } catch {}
+  }
+
   const connect = useCallback(async () => {
     setConnecting(true)
     setError(null)
@@ -37,6 +54,7 @@ export function useWallet() {
       const { address: addr } = await freighter.requestAccess()
       setAddress(addr)
       setConnected(true)
+      certifyWallet(addr)
       return addr
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al conectar wallet')

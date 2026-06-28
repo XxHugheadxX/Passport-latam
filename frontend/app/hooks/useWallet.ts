@@ -1,19 +1,29 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import freighter from '@stellar/freighter-api'
+
+let freighter: any = null
 
 export function useWallet() {
   const [address, setAddress] = useState<string | null>(null)
   const [connected, setConnected] = useState(false)
   const [connecting, setConnecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    check()
+    import('@stellar/freighter-api').then(mod => {
+      freighter = mod.default || mod
+      setReady(true)
+      check()
+    }).catch(() => {
+      setError('Freighter no disponible')
+      setReady(true)
+    })
   }, [])
 
   const check = async () => {
+    if (!freighter) return
     try {
       const { isConnected } = await freighter.isConnected()
       if (!isConnected) return
@@ -26,6 +36,10 @@ export function useWallet() {
   }
 
   const connect = useCallback(async () => {
+    if (!freighter) {
+      setError('Freighter no instalado. Descargalo en https://freighter.app')
+      return
+    }
     setConnecting(true)
     setError(null)
     try {
@@ -51,10 +65,11 @@ export function useWallet() {
   }, [])
 
   const sign = useCallback(async (xdr: string, networkPassphrase: string) => {
+    if (!freighter) throw new Error('Freighter no disponible')
     if (!connected || !address) throw new Error('Wallet no conectada')
     const { signedTxXdr } = await freighter.signTransaction(xdr, { networkPassphrase })
     return signedTxXdr
   }, [connected, address])
 
-  return { address, isConnected: connected, isConnecting: connecting, connect, disconnect, sign, error }
+  return { address, isConnected: connected, isConnecting: connecting, connect, disconnect, sign, error, ready }
 }

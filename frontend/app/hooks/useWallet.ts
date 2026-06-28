@@ -8,6 +8,7 @@ export function useWallet() {
   const [address, setAddress] = useState<string | null>(null)
   const [connected, setConnected] = useState(false)
   const [connecting, setConnecting] = useState(false)
+  const [certifying, setCertifying] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -26,9 +27,9 @@ export function useWallet() {
     } catch {}
   }
 
-  // Best-effort: never throws, never blocks wallet connection
   const certifyWallet = async (addr: string) => {
     try {
+      setCertifying(true)
       const { data: { session } } = await createClient().auth.getSession()
       if (!session) return
       await fetch('/api/certify', {
@@ -39,7 +40,9 @@ export function useWallet() {
         },
         body: JSON.stringify({ wallet: addr }),
       })
-    } catch {}
+    } catch {} finally {
+      setCertifying(false)
+    }
   }
 
   const connect = useCallback(async () => {
@@ -54,7 +57,7 @@ export function useWallet() {
       const { address: addr } = await freighter.requestAccess()
       setAddress(addr)
       setConnected(true)
-      certifyWallet(addr)
+      await certifyWallet(addr)
       return addr
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al conectar wallet')
@@ -74,5 +77,5 @@ export function useWallet() {
     return signedTxXdr
   }, [connected, address])
 
-  return { address, isConnected: connected, isConnecting: connecting, connect, disconnect, sign, error }
+  return { address, isConnected: connected, isConnecting: connecting, isCertifying: certifying, connect, disconnect, sign, error }
 }

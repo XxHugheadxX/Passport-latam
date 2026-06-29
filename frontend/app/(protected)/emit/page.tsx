@@ -275,7 +275,7 @@ function EmitForm() {
       setTxStatus('submitting')
       setTxMessage('Guardando pasaporte...')
 
-      const pid = result.hash
+      const pid = result.result as string
       setPassportId(pid)
 
       // 5. Save passport

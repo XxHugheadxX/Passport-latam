@@ -158,7 +158,10 @@ export async function submitAndWait(signedXdr: string) {
   }
 
   if (getResponse.status === 'SUCCESS') {
-    return { hash: response.hash, result: getResponse.returnValue }
+    return {
+      hash: response.hash,
+      result: getResponse.returnValue ? scValToNative(getResponse.returnValue) : null,
+    }
   }
   throw new Error('Transaction failed: ' + getResponse.status)
 }

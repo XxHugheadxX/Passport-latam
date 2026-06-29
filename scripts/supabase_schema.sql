@@ -1,9 +1,9 @@
--- =============================================================================
--- Passport LATAM — Supabase Schema completo
--- Ejecutar en: Supabase Dashboard → SQL Editor → New Query
+﻿-- =============================================================================
+-- Passport LATAM â€” Supabase Schema completo
+-- Ejecutar en: Supabase Dashboard â†’ SQL Editor â†’ New Query
 -- =============================================================================
 
--- ── Extensiones necesarias ────────────────────────────────────────────────────
+-- â”€â”€ Extensiones necesarias â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
@@ -28,11 +28,11 @@ CREATE TABLE IF NOT EXISTS companies (
   updated_at    TIMESTAMPTZ DEFAULT NOW()
 );
 
--- ── Índices ───────────────────────────────────────────────────────────────────
-CREATE INDEX idx_companies_user_id ON companies(user_id);
-CREATE INDEX idx_companies_stellar ON companies(stellar_address);
+-- â”€â”€ Ãndices â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+CREATE INDEX IF NOT EXISTS idx_companies_user_id ON companies(user_id);
+CREATE INDEX IF NOT EXISTS idx_companies_stellar ON companies(stellar_address);
 
--- ── RLS (Row Level Security) ──────────────────────────────────────────────────
+-- â”€â”€ RLS (Row Level Security) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 ALTER TABLE companies ENABLE ROW LEVEL SECURITY;
 
 -- Empresa ve solo sus propios datos
@@ -66,20 +66,20 @@ CREATE TABLE IF NOT EXISTS products (
   certifications JSONB DEFAULT '[]',        -- [{name, issuer, date, url}]
   -- Media
   images        TEXT[],                     -- URLs en Supabase Storage
-  -- Hash para verificación on-chain
-  -- Este es el SHA-256 del JSON canónico de todos los campos arriba
+  -- Hash para verificaciÃ³n on-chain
+  -- Este es el SHA-256 del JSON canÃ³nico de todos los campos arriba
   metadata_hash TEXT,                       -- 64 chars hex, generado al emitir
   -- Timestamps
   created_at    TIMESTAMPTZ DEFAULT NOW(),
   updated_at    TIMESTAMPTZ DEFAULT NOW()
 );
 
--- ── Índices ───────────────────────────────────────────────────────────────────
-CREATE INDEX idx_products_company_id ON products(company_id);
-CREATE INDEX idx_products_category   ON products(category);
-CREATE INDEX idx_products_country    ON products(origin_country);
+-- â”€â”€ Ãndices â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+CREATE INDEX IF NOT EXISTS idx_products_company_id ON products(company_id);
+CREATE INDEX IF NOT EXISTS idx_products_category   ON products(category);
+CREATE INDEX IF NOT EXISTS idx_products_country    ON products(origin_country);
 
--- ── RLS ───────────────────────────────────────────────────────────────────────
+-- â”€â”€ RLS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 
 -- La empresa ve sus productos
@@ -88,7 +88,7 @@ CREATE POLICY "products_select_own" ON products
     company_id IN (SELECT id FROM companies WHERE user_id = auth.uid())
   );
 
--- Público puede ver productos que tienen pasaporte emitido
+-- PÃºblico puede ver productos que tienen pasaporte emitido
 CREATE POLICY "products_select_public" ON products
   FOR SELECT USING (metadata_hash IS NOT NULL);
 
@@ -104,40 +104,40 @@ CREATE POLICY "products_update_own" ON products
 
 -- =============================================================================
 -- TABLA: passports
--- Pasaportes digitales — bridge entre on-chain y off-chain
+-- Pasaportes digitales â€” bridge entre on-chain y off-chain
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS passports (
   id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   -- Referencia off-chain
   product_id      UUID NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
   company_id      UUID NOT NULL REFERENCES companies(id) ON DELETE RESTRICT,
-  -- Datos on-chain (guardados aquí como cache para el frontend)
+  -- Datos on-chain (guardados aquÃ­ como cache para el frontend)
   passport_id     TEXT NOT NULL UNIQUE,     -- ID on-chain (64 chars hex)
   metadata_hash   TEXT NOT NULL,            -- hash verificable
   issuer_address  TEXT NOT NULL,            -- wallet del issuer
-  owner_address   TEXT NOT NULL,            -- dueño actual
+  owner_address   TEXT NOT NULL,            -- dueÃ±o actual
   is_active       BOOLEAN DEFAULT TRUE,
-  issued_at_ledger INTEGER,                 -- ledger de emisión
+  issued_at_ledger INTEGER,                 -- ledger de emisiÃ³n
   -- QR
-  qr_url          TEXT,                     -- URL pública /verify/{passport_id}
-  -- Transacción de emisión
+  qr_url          TEXT,                     -- URL pÃºblica /verify/{passport_id}
+  -- TransacciÃ³n de emisiÃ³n
   tx_hash         TEXT,                     -- hash de la tx en Stellar
   -- Timestamps
   created_at      TIMESTAMPTZ DEFAULT NOW(),
   updated_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
--- ── Índices ───────────────────────────────────────────────────────────────────
-CREATE INDEX idx_passports_passport_id  ON passports(passport_id);
-CREATE INDEX idx_passports_product_id   ON passports(product_id);
-CREATE INDEX idx_passports_owner        ON passports(owner_address);
-CREATE INDEX idx_passports_issuer       ON passports(issuer_address);
-CREATE INDEX idx_passports_metadata     ON passports(metadata_hash);
+-- â”€â”€ Ãndices â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+CREATE INDEX IF NOT EXISTS idx_passports_passport_id  ON passports(passport_id);
+CREATE INDEX IF NOT EXISTS idx_passports_product_id   ON passports(product_id);
+CREATE INDEX IF NOT EXISTS idx_passports_owner        ON passports(owner_address);
+CREATE INDEX IF NOT EXISTS idx_passports_issuer       ON passports(issuer_address);
+CREATE INDEX IF NOT EXISTS idx_passports_metadata     ON passports(metadata_hash);
 
--- ── RLS ───────────────────────────────────────────────────────────────────────
+-- â”€â”€ RLS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 ALTER TABLE passports ENABLE ROW LEVEL SECURITY;
 
--- Público puede leer cualquier pasaporte (necesario para /verify)
+-- PÃºblico puede leer cualquier pasaporte (necesario para /verify)
 CREATE POLICY "passports_select_public" ON passports
   FOR SELECT USING (TRUE);
 
@@ -162,25 +162,25 @@ CREATE TABLE IF NOT EXISTS traceability_events (
   passport_id  TEXT NOT NULL,               -- referencia al passport_id on-chain
   event_type   TEXT NOT NULL,               -- "emitted", "transferred", "revoked", "verified"
   -- Datos del evento
-  from_address TEXT,                        -- para transfers: dueño anterior
-  to_address   TEXT,                        -- para transfers: nuevo dueño
+  from_address TEXT,                        -- para transfers: dueÃ±o anterior
+  to_address   TEXT,                        -- para transfers: nuevo dueÃ±o
   metadata     JSONB DEFAULT '{}',          -- datos adicionales del evento
   -- On-chain
-  ledger       INTEGER,                     -- ledger donde ocurrió
-  tx_hash      TEXT,                        -- hash de la transacción
+  ledger       INTEGER,                     -- ledger donde ocurriÃ³
+  tx_hash      TEXT,                        -- hash de la transacciÃ³n
   -- Timestamps
   created_at   TIMESTAMPTZ DEFAULT NOW()
 );
 
--- ── Índices ───────────────────────────────────────────────────────────────────
-CREATE INDEX idx_events_passport_id ON traceability_events(passport_id);
-CREATE INDEX idx_events_type        ON traceability_events(event_type);
-CREATE INDEX idx_events_created     ON traceability_events(created_at DESC);
+-- â”€â”€ Ãndices â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+CREATE INDEX IF NOT EXISTS idx_events_passport_id ON traceability_events(passport_id);
+CREATE INDEX IF NOT EXISTS idx_events_type        ON traceability_events(event_type);
+CREATE INDEX IF NOT EXISTS idx_events_created     ON traceability_events(created_at DESC);
 
--- ── RLS ───────────────────────────────────────────────────────────────────────
+-- â”€â”€ RLS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 ALTER TABLE traceability_events ENABLE ROW LEVEL SECURITY;
 
--- Público puede ver el historial de eventos
+-- PÃºblico puede ver el historial de eventos
 CREATE POLICY "events_select_public" ON traceability_events
   FOR SELECT USING (TRUE);
 
@@ -189,8 +189,8 @@ CREATE POLICY "events_insert_service" ON traceability_events
   FOR INSERT WITH CHECK (TRUE);
 
 -- =============================================================================
--- FUNCIÓN: update_updated_at
--- Trigger para actualizar updated_at automáticamente
+-- FUNCIÃ“N: update_updated_at
+-- Trigger para actualizar updated_at automÃ¡ticamente
 -- =============================================================================
 CREATE OR REPLACE FUNCTION update_updated_at()
 RETURNS TRIGGER AS $$
@@ -213,8 +213,8 @@ CREATE TRIGGER passports_updated_at
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- =============================================================================
--- FUNCIÓN: compute_metadata_hash
--- Genera el SHA-256 del JSON canónico del producto
+-- FUNCIÃ“N: compute_metadata_hash
+-- Genera el SHA-256 del JSON canÃ³nico del producto
 -- Usar desde el frontend para verificar que el hash off-chain coincide con on-chain
 -- =============================================================================
 CREATE OR REPLACE FUNCTION compute_metadata_hash(product_uuid UUID)
@@ -225,7 +225,7 @@ DECLARE
 BEGIN
   SELECT * INTO product_row FROM products WHERE id = product_uuid;
 
-  -- JSON canónico: campos ordenados alfabéticamente, sin espacios
+  -- JSON canÃ³nico: campos ordenados alfabÃ©ticamente, sin espacios
   -- Este MISMO orden debe usar el frontend al calcular el hash
   canonical_json := jsonb_build_object(
     'category',       product_row.category,
@@ -244,26 +244,27 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- =============================================================================
 -- STORAGE BUCKETS
--- Crear en: Supabase Dashboard → Storage → New Bucket
+-- Crear en: Supabase Dashboard â†’ Storage â†’ New Bucket
 -- O ejecutar via API:
 -- =============================================================================
--- Bucket: product-images (público)
+-- Bucket: product-images (pÃºblico)
 --   Max file size: 5MB
 --   Allowed MIME types: image/jpeg, image/png, image/webp
 --
--- Bucket: certifications (privado — solo la empresa ve sus certificados)
+-- Bucket: certifications (privado â€” solo la empresa ve sus certificados)
 --   Max file size: 10MB
 --   Allowed MIME types: application/pdf
 -- =============================================================================
 
--- ── Datos de prueba ───────────────────────────────────────────────────────────
--- IMPORTANTE: Solo para desarrollo. Eliminar antes de producción.
+-- â”€â”€ Datos de prueba â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- IMPORTANTE: Solo para desarrollo. Eliminar antes de producciÃ³n.
 --
 -- INSERT INTO companies (user_id, name, country, sector, stellar_address) VALUES
 --   ('00000000-0000-0000-0000-000000000001', 'Alpaca Boliviana SA', 'BO', 'textile', 'GXXXXXXXXX...'),
---   ('00000000-0000-0000-0000-000000000002', 'Café Colombia Org', 'CO', 'coffee', 'GYYYYYYYYYY...');
+--   ('00000000-0000-0000-0000-000000000002', 'CafÃ© Colombia Org', 'CO', 'coffee', 'GYYYYYYYYYY...');
 
 -- =============================================================================
 -- FIN DEL SCHEMA
 -- Verificar con: SELECT tablename FROM pg_tables WHERE schemaname = 'public';
 -- =============================================================================
+

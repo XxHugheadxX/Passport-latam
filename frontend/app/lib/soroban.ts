@@ -1,4 +1,5 @@
 import {
+  Account,
   Contract,
   rpc,
   TransactionBuilder,
@@ -7,6 +8,11 @@ import {
   nativeToScVal,
   scValToNative,
 } from '@stellar/stellar-sdk'
+
+const SIMULATION_ACCOUNT = 'GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN'
+function fakeAccount() {
+  return new Account(SIMULATION_ACCOUNT, '0')
+}
 
 function getConfig() {
   const rpcUrl = process.env.NEXT_PUBLIC_STELLAR_RPC_URL
@@ -40,8 +46,7 @@ export function getNetworkPassphrase() {
 export async function isCertifiedIssuer(address: string): Promise<boolean> {
   const server = getServer()
   const contract = getContract()
-  const sourceAccount = 'GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN'
-  const account = await server.getAccount(sourceAccount)
+  const account = fakeAccount()
   const np = getConfig().networkPassphrase
 
   const tx = new TransactionBuilder(account, {
@@ -63,18 +68,8 @@ export async function isCertifiedIssuer(address: string): Promise<boolean> {
 export async function verifyPassport(passportId: string) {
   const server = getServer()
   const contract = getContract()
-  const sourceAccount = 'GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN'
+  const account = fakeAccount()
   const np = getConfig().networkPassphrase
-
-  let account
-  try {
-    account = await server.getAccount(sourceAccount)
-  } catch (e: any) {
-    if (e?.message?.includes('NOT_FOUND')) {
-      throw new Error('La red Stellar no reconoce la cuenta de verificación. Probá de nuevo más tarde.')
-    }
-    throw new Error('No se pudo conectar con la red Stellar. Verificá tu conexión.')
-  }
 
   const tx = new TransactionBuilder(account, {
     fee: BASE_FEE,

@@ -304,8 +304,6 @@ function EmitForm() {
 
       setTxStatus('success')
       setTxMessage('¡Pasaporte emitido exitosamente!')
-
-      await qr.generate(pid)
       setStep('result')
     } catch (e) {
       setTxStatus('error')
@@ -403,7 +401,7 @@ function EmitForm() {
   }
 
   // --- Result ---
-  if (step === 'result' && passportId && qr.qrDataUrl) return (
+  if (step === 'result' && passportId) return (
     <div className="flex-1 p-4 max-w-md mx-auto w-full flex items-center justify-center">
       <div className="bg-ivory/95 backdrop-blur-sm rounded-2xl shadow-2xl p-7 border w-full text-center">
         <svg className="w-12 h-12 text-espresso/70 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>

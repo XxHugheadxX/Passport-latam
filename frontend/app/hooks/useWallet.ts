@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { createClient } from '@/app/lib/supabase'
 
 let freighter: any = null
 
@@ -32,6 +33,7 @@ export function useWallet() {
       if (addr) {
         setAddress(addr)
         setConnected(true)
+        await certifyWallet(addr)
       }
     } catch {}
   }

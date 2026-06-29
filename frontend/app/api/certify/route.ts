@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
   Address,
   Contract,
@@ -10,15 +10,11 @@ import {
 } from "@stellar/stellar-sdk";
 import { createClient } from "@supabase/supabase-js";
 
-// â”€â”€â”€ Config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
 const CONTRACT_ID  = process.env.NEXT_PUBLIC_CONTRACT_ID!;
 const RPC_URL      = process.env.NEXT_PUBLIC_STELLAR_RPC_URL!;
 const NETWORK      = process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? "testnet";
 const PASSPHRASE   = NETWORK === "mainnet" ? Networks.PUBLIC : Networks.TESTNET;
 const ADMIN_SECRET = process.env.STELLAR_ADMIN_SECRET_KEY!;
-
-// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function addr(a: string): xdr.ScVal {
   return new Address(a).toScVal();
@@ -26,7 +22,6 @@ function addr(a: string): xdr.ScVal {
 
 const STELLAR_ADDRESS_RE = /^G[A-Z2-7]{55}$/;
 
-// Waits up to 20 s for the transaction to leave NOT_FOUND state.
 async function waitForTx(
   server: rpc.Server,
   hash: string,
@@ -41,10 +36,7 @@ async function waitForTx(
   throw new Error("Transaction did not confirm within 20 s");
 }
 
-// â”€â”€â”€ POST /api/certify â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
 export async function POST(req: NextRequest) {
-  // â”€â”€ Auth: solo usuarios autenticados en Supabase pueden certificar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const token = req.headers.get("authorization")?.replace("Bearer ", "");
   if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -60,7 +52,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // â”€â”€ Validar wallet â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const body = await req.json().catch(() => ({}));
   const { wallet } = body as { wallet?: string };
 
@@ -68,13 +59,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid Stellar address" }, { status: 400 });
   }
 
-  // â”€â”€ Certificar on-chain â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   try {
     const adminKeypair = Keypair.fromSecret(ADMIN_SECRET);
     const server       = new rpc.Server(RPC_URL);
     const contract     = new Contract(CONTRACT_ID);
 
-    // Construir tx
     const account = await server.getAccount(adminKeypair.publicKey());
     const tx = new TransactionBuilder(account, {
       fee: "1000000",
@@ -90,18 +79,15 @@ export async function POST(req: NextRequest) {
       .setTimeout(30)
       .build();
 
-    // Simular
     const sim = await server.simulateTransaction(tx);
 
     if (rpc.Api.isSimulationError(sim)) {
-      // Ya estaba certificado â€” no es un error para el frontend
       if (sim.error.includes("IssuerAlreadyCertified") || sim.error.includes("#12")) {
         return NextResponse.json({ certified: true, already: true });
       }
       return NextResponse.json({ error: sim.error }, { status: 500 });
     }
 
-    // Ensamblar, firmar y enviar
     const assembled = rpc.assembleTransaction(tx, sim).build();
     assembled.sign(adminKeypair);
 
@@ -113,7 +99,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Esperar confirmaciÃ³n
     const confirmed = await waitForTx(server, sent.hash);
     if (confirmed.status !== rpc.Api.GetTransactionStatus.SUCCESS) {
       return NextResponse.json(
@@ -130,4 +115,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

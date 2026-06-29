@@ -21,6 +21,7 @@ export default function VerifyPage() {
   const [loading, setLoading] = useState(true)
   const [verifying, setVerifying] = useState(false)
   const [verified, setVerified] = useState(false)
+  const [verifyError, setVerifyError] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -65,13 +66,15 @@ export default function VerifyPage() {
   const handleVerify = async () => {
     setVerifying(true)
     setVerified(false)
+    setVerifyError(null)
     try {
       const result = await verifyPassport(passportId)
-      const hash = (result as any)?.metadata_hash
+      const hash = result.metadata_hash
       setOnChainHash(hash)
       if (hash && product?.metadata_hash === hash) setVerified(true)
-    } catch {
+    } catch (e) {
       setOnChainHash(null)
+      setVerifyError(e instanceof Error ? e.message : 'Error al verificar en Stellar. Probá de nuevo más tarde.')
     }
     setVerifying(false)
   }
@@ -182,14 +185,22 @@ export default function VerifyPage() {
           <div className="mt-3">
             <VerifyBadge onChainHash={onChainHash} offChainHash={product?.metadata_hash} loading={verifying} />
           </div>
+          {verifyError && (
+            <div className="mt-3 p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">{verifyError}</div>
+          )}
           {onChainHash && (
-            <div className="mt-3 text-xs">
+            <div className="mt-3 text-xs space-y-1">
               <p className="text-base-content/60">Hash on-chain:</p>
-              <p className="font-mono break-all">{onChainHash}</p>
+              <p className="font-mono break-all bg-base-200 p-2 rounded">{onChainHash}</p>
               {product?.metadata_hash && (
                 <>
-                  <p className="text-base-content/60 mt-1">Hash off-chain:</p>
-                  <p className="font-mono break-all">{product.metadata_hash}</p>
+                  <p className="text-base-content/60 mt-2">Hash off-chain:</p>
+                  <p className="font-mono break-all bg-base-200 p-2 rounded">{product.metadata_hash}</p>
+                  <p className={`mt-2 font-medium ${onChainHash === product.metadata_hash ? 'text-success' : 'text-error'}`}>
+                    {onChainHash === product.metadata_hash
+                      ? '✓ Los hashes coinciden — el pasaporte es auténtico'
+                      : '✗ Los hashes no coinciden — el pasaporte fue alterado'}
+                  </p>
                 </>
               )}
             </div>

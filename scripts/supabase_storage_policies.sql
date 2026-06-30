@@ -1,5 +1,5 @@
 -- Storage policies for product-images bucket
--- Run in: https://supabase.com/dashboard/project/hvaqujxehapctugwrvxo/sql/new
+-- Run in: Supabase Dashboard → SQL Editor → New query
 
 DROP POLICY IF EXISTS "public_read_product_images"   ON storage.objects;
 DROP POLICY IF EXISTS "auth_upload_product_images"   ON storage.objects;

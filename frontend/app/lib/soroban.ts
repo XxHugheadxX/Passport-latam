@@ -1,6 +1,7 @@
 import {
   Account,
   Contract,
+  Keypair,
   rpc,
   TransactionBuilder,
   Networks,
@@ -9,9 +10,8 @@ import {
   scValToNative,
 } from '@stellar/stellar-sdk'
 
-const SIMULATION_ACCOUNT = 'GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN'
 function fakeAccount() {
-  return new Account(SIMULATION_ACCOUNT, '0')
+  return new Account(Keypair.random().publicKey(), '0')
 }
 
 function getConfig() {

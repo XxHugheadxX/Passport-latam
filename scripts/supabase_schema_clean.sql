@@ -21,13 +21,14 @@ CREATE INDEX IF NOT EXISTS idx_companies_user_id ON companies(user_id);
 CREATE INDEX IF NOT EXISTS idx_companies_stellar  ON companies(stellar_address);
 ALTER TABLE companies ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS company_select_own ON companies;
-DROP POLICY IF EXISTS company_insert_own ON companies;
-DROP POLICY IF EXISTS company_update_own ON companies;
+DROP POLICY IF EXISTS company_select_own    ON companies;
+DROP POLICY IF EXISTS company_select_public ON companies;
+DROP POLICY IF EXISTS company_insert_own    ON companies;
+DROP POLICY IF EXISTS company_update_own    ON companies;
 
-CREATE POLICY company_select_own ON companies FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY company_insert_own ON companies FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY company_update_own ON companies FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY company_select_public ON companies FOR SELECT USING (TRUE);
+CREATE POLICY company_insert_own    ON companies FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY company_update_own    ON companies FOR UPDATE USING (auth.uid() = user_id);
 
 -- products
 CREATE TABLE IF NOT EXISTS products (

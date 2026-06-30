@@ -8,7 +8,7 @@ interface VerifyBadgeProps {
 
 export function VerifyBadge({ onChainHash, offChainHash, loading }: VerifyBadgeProps) {
   if (loading) return <div className="badge badge-ghost gap-2"><span className="loading loading-spinner loading-xs" /> Verificando...</div>
-  if (!onChainHash) return <div className="badge badge-warning gap-2">No disponible en Stellar</div>
+  if (!onChainHash) return null
 
   const match = onChainHash === offChainHash
 

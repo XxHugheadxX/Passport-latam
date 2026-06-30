@@ -18,6 +18,7 @@ export default function VerifyPage() {
   const [company, setCompany] = useState<any>(null)
   const [events, setEvents] = useState<TraceEvent[]>([])
   const [onChainHash, setOnChainHash] = useState<string | null>(null)
+  const [onChainData, setOnChainData] = useState<{ owner: string; issuer: string; is_active?: boolean } | null>(null)
   const [loading, setLoading] = useState(true)
   const [verifying, setVerifying] = useState(false)
   const [verified, setVerified] = useState(false)
@@ -71,10 +72,17 @@ export default function VerifyPage() {
       const result = await verifyPassport(passportId)
       const hash = result.metadata_hash
       setOnChainHash(hash)
+      setOnChainData({ owner: result.owner, issuer: result.issuer, is_active: (result as any).is_active })
       if (hash && product?.metadata_hash === hash) setVerified(true)
     } catch (e) {
       setOnChainHash(null)
-      setVerifyError(e instanceof Error ? e.message : 'Error al verificar en Stellar. Probá de nuevo más tarde.')
+      setOnChainData(null)
+      const msg = e instanceof Error ? e.message : ''
+      if (msg.includes('PassportNotFound') || msg.includes('#5')) {
+        setVerifyError('Este pasaporte no existe en el contrato Stellar. Puede que aún no haya sido emitido on-chain.')
+      } else {
+        setVerifyError(msg || 'Error al verificar en Stellar. Probá de nuevo más tarde.')
+      }
     }
     setVerifying(false)
   }
@@ -189,19 +197,39 @@ export default function VerifyPage() {
             <div className="mt-3 p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">{verifyError}</div>
           )}
           {onChainHash && (
-            <div className="mt-3 text-xs space-y-1">
-              <p className="text-base-content/60">Hash on-chain:</p>
-              <p className="font-mono break-all bg-base-200 p-2 rounded">{onChainHash}</p>
+            <div className="mt-3 text-xs space-y-2">
+              <div>
+                <p className="text-base-content/60 mb-1">Hash on-chain (Stellar):</p>
+                <p className="font-mono break-all bg-base-200 p-2 rounded">{onChainHash}</p>
+              </div>
               {product?.metadata_hash && (
-                <>
-                  <p className="text-base-content/60 mt-2">Hash off-chain:</p>
+                <div>
+                  <p className="text-base-content/60 mb-1">Hash off-chain (Supabase):</p>
                   <p className="font-mono break-all bg-base-200 p-2 rounded">{product.metadata_hash}</p>
-                  <p className={`mt-2 font-medium ${onChainHash === product.metadata_hash ? 'text-success' : 'text-error'}`}>
+                  <p className={`mt-2 font-semibold ${onChainHash === product.metadata_hash ? 'text-success' : 'text-error'}`}>
                     {onChainHash === product.metadata_hash
                       ? '✓ Los hashes coinciden — el pasaporte es auténtico'
                       : '✗ Los hashes no coinciden — el pasaporte fue alterado'}
                   </p>
-                </>
+                </div>
+              )}
+              {onChainData && (
+                <div className="mt-3 pt-3 border-t border-base-200 space-y-2">
+                  <p className="text-base-content/60 font-medium">Datos on-chain:</p>
+                  <div>
+                    <p className="text-base-content/40">Emisor (Issuer):</p>
+                    <p className="font-mono break-all">{onChainData.issuer}</p>
+                  </div>
+                  <div>
+                    <p className="text-base-content/40">Propietario actual (Owner):</p>
+                    <p className="font-mono break-all">{onChainData.owner}</p>
+                  </div>
+                  {onChainData.is_active !== undefined && (
+                    <p className={onChainData.is_active ? 'text-success' : 'text-error'}>
+                      {onChainData.is_active ? '● Pasaporte activo' : '● Pasaporte revocado'}
+                    </p>
+                  )}
+                </div>
               )}
             </div>
           )}

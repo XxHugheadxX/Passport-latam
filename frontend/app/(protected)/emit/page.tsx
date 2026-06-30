@@ -188,7 +188,7 @@ function EmitForm() {
         certifications,
         year: form.year,
       }
-      const metadataHash = computeMetadataHash(productData)
+      const metadataHash = await computeMetadataHash(productData)
 
       // 3. Save or update product
       let productId: string

@@ -1,6 +1,4 @@
-import { createHash } from 'crypto';
-
-export function computeMetadataHash(product: {
+export async function computeMetadataHash(product: {
   category:       string;
   certifications: any[];
   description:    string;
@@ -9,9 +7,8 @@ export function computeMetadataHash(product: {
   origin_city:    string;
   origin_country: string;
   year:           number | null;
-}): string {
-  // CRÍTICO: los campos deben estar en orden ALFABÉTICO
-  // y el JSON no debe tener espacios
+}): Promise<string> {
+  // Campos en orden ALFABÉTICO, sin espacios — mismo orden que el contrato espera
   const canonical = JSON.stringify({
     category:       product.category,
     certifications: product.certifications,
@@ -21,7 +18,10 @@ export function computeMetadataHash(product: {
     origin_city:    product.origin_city,
     origin_country: product.origin_country,
     year:           product.year,
-  });
-  return createHash('sha256').update(canonical).digest('hex');
-  // Retorna string de 64 chars hex — listo para emit_passport
+  })
+  const bytes = new TextEncoder().encode(canonical)
+  const buffer = await crypto.subtle.digest('SHA-256', bytes)
+  return Array.from(new Uint8Array(buffer))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
 }

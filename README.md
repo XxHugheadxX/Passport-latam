@@ -317,8 +317,14 @@ cargo test --target x86_64-pc-windows-msvc
 |--------|-----|--------|
 | William Yucra | Smart contract (Soroban/Rust) + Backend | [@XxHugheadxX](https://github.com/XxHugheadxX) |
 | Alejandro Anchundia | Frontend (Next.js + UI/UX) | [@anchundiatech](https://github.com/anchundiatech) |
-| Odry Nataly | Documentación + propuesta V4 anti-greenwashing | — |
-| Darianny Robledo | Documentación e investigación | — |
+| Odry Nataly | Origen de la idea + propuesta V4 anti-greenwashing | — |
+| Darianny Robledo | Investigación y documentación | — |
+
+---
+
+## Recursos del proyecto
+
+📁 **[Documentación y materiales](https://drive.google.com/drive/folders/1Zs7auUlKZtbnlDxUUdG8KddBNUCC5luY?usp=sharing)**
 
 ---
 
